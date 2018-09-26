@@ -6,11 +6,13 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <errno.h>
+#include <signal.h>
 #include "validation.h"
 
 void deallocateMemory();
+void timeoutKillAll();
+void handleCtrlC();
 void checkForErrors(char programName[], int errnoValue);
-
 int shm_id;
 int option, n, s, customErrorCode;
 void* shm_address;
@@ -18,6 +20,11 @@ static char usageError[] = "%s: Usage: %s [-n <number of processes> -s <number o
 
 
 int main(int argc, char *argv[]){
+
+  signal(SIGALRM, timeoutKillAll);
+  signal(SIGINT, handleCtrlC);
+
+
   extern char *optarg;
   while ((option = getopt(argc, argv, "hn:s:")) != -1) {
     switch (option) {
@@ -50,6 +57,8 @@ int main(int argc, char *argv[]){
   if (argc != 5){
    customErrorCode = 3;
  }
+
+ alarm(2);
 
   switch (customErrorCode) {
    case 1:
@@ -124,4 +133,18 @@ void checkForErrors(char programName[], int errnoValue){
     deallocateMemory();
     exit (1);
   }
+}
+
+void timeoutKillAll() {
+  fprintf(stderr, "PID: %ld Master process is timing out. terminating all children\n", (long)getpid());
+  kill(0, SIGTERM);
+  deallocateMemory();
+  exit(1);
+}
+
+void handleCtrlC() {
+  fprintf(stderr, "PID: %ld Master process is timing out due to Ctrl + C. Terminating children\n", (long)getpid());
+  kill(0, SIGTERM);
+  deallocateMemory();
+  exit(1);
 }
