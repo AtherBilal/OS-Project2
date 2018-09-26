@@ -109,15 +109,22 @@ int main(int argc, char *argv[]){
     // checkForErrors(argv[0], errno);
     if (pid == 0) {
       printf("Successfully created child process\n");
-      execl("./child", "child", NULL);
+
+      // convert n to string to be passed into child
+      int length = snprintf( NULL, 0, "%d", n );
+      char* numString = malloc( length + 1 );
+      snprintf( numString, length + 1, "%d", n );
+
+      execl("./child", "child", numString, NULL);
     }
     if (pid) {
       running_count++;
     }
-    wait(NULL);
     printf("from parent 0:%d\n", shm_clock[0]);
     printf("from parent 1:%d\n", shm_clock[1]);
   }
+  wait(NULL);
+
 
   // deallocateMemory();
 }

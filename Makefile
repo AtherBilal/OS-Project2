@@ -9,3 +9,5 @@ master: src/master.c
 	$(CC) $(CFLAGS) $< $(HELPERFILES) -o bin/$@
 child:src/child.c
 	$(CC) $(CFLAGS) $< $(HELPERFILES) -o bin/$@
+clean:
+	rm -rf bin/

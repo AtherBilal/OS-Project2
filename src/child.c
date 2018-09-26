@@ -5,13 +5,18 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <errno.h>
+#include <unistd.h>
+
 
 void checkForErrors(char programName[], int errnoValue);
 
 int main(int argc, char *argv[]){
   int shm_id;
   void* shm_address;
-  printf("Child process running");
+  int n = (int)strtol(argv[1], NULL, 0);
+
+  printf("Child process running\n");
+
 
   // create key using the same file as parent (same shared memory)
   key_t shm_key = ftok("./CreateKeyFile", 1);
@@ -19,17 +24,23 @@ int main(int argc, char *argv[]){
   checkForErrors(argv[0], errno);
   shm_address = shmat(shm_id, (void*)0, 0);
   int* shm_clock = shm_address;
-  shm_clock[0] = 123; //seconds
-  shm_clock[1] = 456; // nanoseconds
+
+  int i;
+  for (i=1; i< n * 1000000; i++){
+      if(shm_clock[1] == 999){
+        shm_clock[1]= 0;
+        shm_clock[0]++;
+      } else {
+        shm_clock[1]++;
+      }
+  }
+
   checkForErrors(argv[0], errno);
 
 
-  printf("from child, 0:%d\n", shm_clock[0]);
-  printf("from child, 1:%d\n", shm_clock[1]);
+  printf("from child, seconds:%d\n", shm_clock[0]);
+  printf("from child, milliseconds:%d\n", shm_clock[1]);
 
-  while(1){
-    printf("%s\n", argv[0] );
-  }
 }
 
 void checkForErrors(char programName[], int errnoValue){
