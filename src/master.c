@@ -104,11 +104,9 @@ int main(int argc, char *argv[]){
   shm_clock[1] = 0; // milliseconds
 
 
-  int running_count = 0;
   pid_t pid;
   for (int i = 0; i < s; i++) {
     pid = fork();
-    // checkForErrors(argv[0], errno);
     if (pid == 0) {
 
       // convert n to string to be passed into child
@@ -133,10 +131,6 @@ int main(int argc, char *argv[]){
 
       execl("./child", "child", numString, NULL);
     }
-    if (pid) {
-      running_count++;
-    }
-
   }
   waitpid(pid, NULL, 0);
   printf("from parent clock value -> %d:%d\n", shm_clock[0],shm_clock[1]);
