@@ -121,8 +121,6 @@ int main(int argc, char *argv[]){
   for (int i = 0; i < n - s; i++) {
     waitpid(pid, NULL, 0);
     pid = fork();
-    // checkForErrors(argv[0], errno);
-
     if (pid == 0) {
       // convert n to string to be passed into child
       int length = snprintf( NULL, 0, "%d", n );

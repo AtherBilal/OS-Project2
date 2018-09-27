@@ -22,8 +22,7 @@ int main(int argc, char *argv[]){
   shm_address = shmat(shm_id, (void*)0, 0);
   int* shm_clock = shm_address;
 
-  int i;
-  for (i=1; i< n * 1000000; i++){
+  for (int i=1; i< n * 1000000; i++){
       if(shm_clock[1] >= 999){
         shm_clock[1]= 0;
         shm_clock[0]++;
@@ -31,8 +30,6 @@ int main(int argc, char *argv[]){
         shm_clock[1]++;
       }
   }
-
-
 }
 
 void checkForErrors(char programName[], int errnoValue){
