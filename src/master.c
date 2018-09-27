@@ -37,7 +37,9 @@ int main(int argc, char *argv[]){
      case('n'):
        if (isNumber(optarg)) {
          n = (int)strtol(optarg, NULL, 0);
-         printf("n: %d\n", n );
+         if(n > 20) {
+           customErrorCode = 5;
+         }
        } else {
          customErrorCode = 1;
        }
@@ -46,7 +48,6 @@ int main(int argc, char *argv[]){
        // outputting a test error
        if (isNumber(optarg)) {
          s = (int)strtol(optarg, NULL, 0);
-         printf("s: %d\n", s );
        } else {
          customErrorCode = 1;
        }
@@ -61,9 +62,6 @@ int main(int argc, char *argv[]){
  }
  if (s > n) {
    customErrorCode = 4;
- }
- if(n > 20) {
-   customErrorCode = 5;
  }
  switch (customErrorCode) {
    case 1:
