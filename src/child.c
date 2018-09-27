@@ -14,12 +14,9 @@ int main(int argc, char *argv[]){
   int shm_id;
   void* shm_address;
   int n = (int)strtol(argv[1], NULL, 0);
-
-  printf("Child process running\n");
-
-
   // create key using the same file as parent (same shared memory)
   key_t shm_key = ftok("./CreateKeyFile", 1);
+  checkForErrors(argv[0], errno);
   shm_id = shmget(shm_key, sizeof(int) * 2, 0);
   checkForErrors(argv[0], errno);
   shm_address = shmat(shm_id, (void*)0, 0);
@@ -27,7 +24,7 @@ int main(int argc, char *argv[]){
 
   int i;
   for (i=1; i< n * 1000000; i++){
-      if(shm_clock[1] == 999){
+      if(shm_clock[1] >= 999){
         shm_clock[1]= 0;
         shm_clock[0]++;
       } else {
@@ -35,11 +32,6 @@ int main(int argc, char *argv[]){
       }
   }
 
-  checkForErrors(argv[0], errno);
-
-
-  printf("from child, seconds:%d\n", shm_clock[0]);
-  printf("from child, milliseconds:%d\n", shm_clock[1]);
 
 }
 

@@ -14,13 +14,15 @@ void timeoutKillAll();
 void handleCtrlC();
 void checkForErrors(char programName[], int errnoValue);
 int shm_id;
+int* shm_clock;
 int option, n, s, customErrorCode;
 void* shm_address;
-static char usageError[] = "%s: Usage: %s [-n <number of processes> -s <number of processes running at any given time>]\n";
+static char usageError[] = "%s: Usage: %s [-n <number of processes (max 20)> -s <number of processes running at any given time>]\n";
 
 
 int main(int argc, char *argv[]){
-
+  // set signals
+  alarm(2);
   signal(SIGALRM, timeoutKillAll);
   signal(SIGINT, handleCtrlC);
 
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]){
     switch (option) {
      //user asked for help
      case('h'):
-       printf("Help: to run this program run the following command:\n%s -n <number of processes> -s <number of processes running at any given time>\n", argv[0]);
+       printf("Help: to run this program run the following command:\n%s -n <number of processes (max 20)> -s <number of processes running at any given time>\n", argv[0]);
        return 0;
      case('n'):
        if (isNumber(optarg)) {
@@ -57,59 +59,75 @@ int main(int argc, char *argv[]){
   if (argc != 5){
    customErrorCode = 3;
  }
-
- alarm(2);
-
-  switch (customErrorCode) {
+ if (s > n) {
+   customErrorCode = 4;
+ }
+ if(n > 20) {
+   customErrorCode = 5;
+ }
+ switch (customErrorCode) {
    case 1:
-     fprintf(stderr, "%s: Error: %s\n", argv[0], "invalid n value");
-     fprintf(stderr, usageError, argv[0], argv[0]);
-     exit(1);
+    fprintf(stderr, "%s: Error: %s\n", argv[0], "invalid n value");
+    fprintf(stderr, usageError, argv[0], argv[0]);
+    exit(1);
    case 2:
     fprintf(stderr, "%s: Error: %s\n", argv[0], "Error Requesting shared memory");
+    exit(1);
    case 3:
-     fprintf(stderr, usageError, argv[0], argv[0]);
-     exit(1);
+    fprintf(stderr, usageError, argv[0], argv[0]);
+    exit(1);
+   case 4:
+    fprintf(stderr, "%s: Error: %s\n", argv[0], "the -s value cannot be greater than the -n value");
+    fprintf(stderr, usageError, argv[0], argv[0]);
+    exit(1);
+   case 5:
+    fprintf(stderr, "%s: Error: %s\n", argv[0], "-n value cannot be greater than 20");
+    fprintf(stderr, usageError, argv[0], argv[0]);
+    exit(1);
  }
- // checkForErrors(argv[0], errno);
-
 
   // create shm_key using inode of CreateKeyFile
-
-  printf("creating shared memory key\n");
-
-
   key_t shm_key = ftok("./CreateKeyFile", 1);
-
-  printf("%d\n", shm_key);
   checkForErrors(argv[0], errno);
+
   printf("done creating shared memory key\n");
 
   // Request shared memory
   shm_id = shmget(shm_key, sizeof(int) * 2, IPC_CREAT | 0644);
+  checkForErrors(argv[0], errno);
 
   // attach master to shared memory
   shm_address = shmat(shm_id, (void*)0, 0);
-  int* shm_clock = shm_address;
-  // checkForErrors(argv[0], errno);
+  shm_clock = shm_address;
+  checkForErrors(argv[0], errno);
 
   // TODO: Add logic to simulate adding (in child after attaching)
   shm_clock[0] = 0; //seconds
-  shm_clock[1] = 0; // nanoseconds
-
+  shm_clock[1] = 0; // milliseconds
 
 
   int running_count = 0;
   pid_t pid;
-
-  fprintf(stderr, "HI");
-  //Initial Process Spawn
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < s; i++) {
     pid = fork();
     // checkForErrors(argv[0], errno);
     if (pid == 0) {
-      printf("Successfully created child process\n");
 
+      // convert n to string to be passed into child
+      int length = snprintf( NULL, 0, "%d", n );
+      char* numString = malloc( length + 1 );
+      snprintf( numString, length + 1, "%d", n );
+
+      execl("./child", "child", numString, NULL);
+    }
+  }
+  //Initial Process Spawn
+  for (int i = 0; i < n - s; i++) {
+    waitpid(pid, NULL, 0);
+    pid = fork();
+    // checkForErrors(argv[0], errno);
+
+    if (pid == 0) {
       // convert n to string to be passed into child
       int length = snprintf( NULL, 0, "%d", n );
       char* numString = malloc( length + 1 );
@@ -120,14 +138,14 @@ int main(int argc, char *argv[]){
     if (pid) {
       running_count++;
     }
-    printf("from parent 0:%d\n", shm_clock[0]);
-    printf("from parent 1:%d\n", shm_clock[1]);
+
   }
-  wait(NULL);
+  waitpid(pid, NULL, 0);
+  printf("from parent clock value -> %d:%d\n", shm_clock[0],shm_clock[1]);
 
-
-  // deallocateMemory();
+  deallocateMemory();
 }
+
 
 void deallocateMemory() {
   if (shm_id)
@@ -143,6 +161,7 @@ void checkForErrors(char programName[], int errnoValue){
 }
 
 void timeoutKillAll() {
+  printf("from parent clock value -> %d:%d\n", shm_clock[0],shm_clock[1]);
   fprintf(stderr, "PID: %ld Master process is timing out. terminating all children\n", (long)getpid());
   kill(0, SIGTERM);
   deallocateMemory();
@@ -150,6 +169,7 @@ void timeoutKillAll() {
 }
 
 void handleCtrlC() {
+  printf("from parent clock value -> %d:%d\n", shm_clock[0],shm_clock[1]);
   fprintf(stderr, "PID: %ld Master process is timing out due to Ctrl + C. Terminating children\n", (long)getpid());
   kill(0, SIGTERM);
   deallocateMemory();

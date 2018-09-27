@@ -6,6 +6,7 @@ all: $(EXECUTABLES)
 
 master: src/master.c
 	mkdir -p bin/
+	touch bin/CreateKeyFile
 	$(CC) $(CFLAGS) $< $(HELPERFILES) -o bin/$@
 child:src/child.c
 	$(CC) $(CFLAGS) $< $(HELPERFILES) -o bin/$@
