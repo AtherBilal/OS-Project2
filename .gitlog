@@ -1,0 +1,7 @@
+* b05d225 : removed unused variables
+* 24d7ed3 : moved if statement to check n processes
+* 4dedc74 : added s processes support and cleaned up much more code
+* bd81828 : added child incrementing simulated clock
+* 8c0f9e2 : added signals
+* 8c0d2f4 : Implemented step 3
+* ecdd552 : First commit

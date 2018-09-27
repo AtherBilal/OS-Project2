@@ -37,9 +37,6 @@ int main(int argc, char *argv[]){
      case('n'):
        if (isNumber(optarg)) {
          n = (int)strtol(optarg, NULL, 0);
-         if(n > 20) {
-           customErrorCode = 5;
-         }
        } else {
          customErrorCode = 1;
        }
@@ -48,6 +45,9 @@ int main(int argc, char *argv[]){
        // outputting a test error
        if (isNumber(optarg)) {
          s = (int)strtol(optarg, NULL, 0);
+         if(s > 20) {
+           customErrorCode = 5;
+         }
        } else {
          customErrorCode = 1;
        }
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
     fprintf(stderr, usageError, argv[0], argv[0]);
     exit(1);
    case 5:
-    fprintf(stderr, "%s: Error: %s\n", argv[0], "-n value cannot be greater than 20");
+    fprintf(stderr, "%s: Error: %s\n", argv[0], "-s value cannot be greater than 20");
     fprintf(stderr, usageError, argv[0], argv[0]);
     exit(1);
  }
